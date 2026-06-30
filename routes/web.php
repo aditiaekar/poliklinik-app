@@ -73,7 +73,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::resource('polis', AdminPoliController::class);
     Route::resource('dokter', DokterController::class);
     Route::resource('pasien', PasienController::class);
-    Route::resource('obat', ObatController::class);
+
+    // Route untuk menambah stok obat secara manual oleh admin
+    Route::patch('obat/{obat}/tambah-stok', [ObatController::class, 'tambahStok'])
+        ->name('obat.tambah-stok');
+
+    // Route untuk mengurangi stok obat secara manual oleh admin
+    Route::patch('obat/{obat}/kurangi-stok', [ObatController::class, 'kurangiStok'])
+        ->name('obat.kurangi-stok');
+
+    // Resource CRUD obat.
+    // except(['show']) digunakan karena halaman detail obat tidak dipakai.
+    Route::resource('obat', ObatController::class)->except(['show']);
 });
 
 Route::middleware(['auth', 'role:dokter'])->prefix('dokter')->group(function () {
@@ -107,7 +118,6 @@ Route::middleware(['auth', 'role:dokter'])->prefix('dokter')->group(function () 
 
     Route::get('/riwayat-pasien', [RiwayatPasienController::class, 'index'])->name('riwayat-pasien.index');
     Route::get('/riwayat-pasien/{id}', [RiwayatPasienController::class, 'show'])->name('riwayat-pasien.show');
-
 });
 
 Route::middleware(['auth', 'role:pasien'])->prefix('pasien')->group(function () {

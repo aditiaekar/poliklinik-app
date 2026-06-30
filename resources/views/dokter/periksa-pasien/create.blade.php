@@ -2,8 +2,8 @@
 
     {{-- Header --}}
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('periksa-pasien.index') }}" class="inline-flex items-center justify-center w-9 h-9 
-                  rounded-lg bg-slate-100 text-slate-500 
+        <a href="{{ route('periksa-pasien.index') }}" class="inline-flex items-center justify-center w-9 h-9
+                  rounded-lg bg-slate-100 text-slate-500
                   hover:bg-slate-200 transition">
             <i class="fas fa-arrow-left text-sm"></i>
         </a>
@@ -30,11 +30,23 @@
                         @foreach ($obats as $obat)
                             <option value="{{ $obat->id }}"
                                 data-nama="{{ $obat->nama_obat }}"
-                                data-harga="{{ $obat->harga }}">
+                                data-harga="{{ $obat->harga }}"
+                                data-stok="{{ $obat->stok }}"
+                                @disabled($obat->stok <= 0)>
                                 {{ $obat->nama_obat }} - Rp{{ number_format($obat->harga) }}
+                                | Stok: {{ $obat->stok }}
+                                @if($obat->stok <= 0)
+                                    (Habis)
+                                @elseif($obat->status_stok === 'menipis')
+                                    (Menipis)
+                                @endif
                             </option>
                         @endforeach
                     </select>
+
+                    @error('obat_json')
+                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Obat Terpilih --}}
@@ -52,11 +64,14 @@
                 {{-- Total Harga --}}
                 <div class="form-control mb-5">
                     <label class="label pb-1">
-                        <span class="text-sm font-semibold text-gray-700">Total Harga</span>
+                        <span class="text-sm font-semibold text-gray-700">Total Harga Obat</span>
                     </label>
                     <div class="input input-bordered w-full rounded-lg flex items-center bg-slate-50 text-slate-700 font-bold" id="total-harga">
                         Rp 0
                     </div>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Biaya pemeriksaan tetap Rp 150.000 akan ditambahkan otomatis saat data disimpan.
+                    </p>
                 </div>
 
                 {{-- Catatan --}}
@@ -100,10 +115,11 @@
             const id = selectedOption.value;
             const nama = selectedOption.dataset.nama;
             const harga = parseInt(selectedOption.dataset.harga || 0);
+            const stok = parseInt(selectedOption.dataset.stok || 0);
 
-            if (!id || daftarObat.some(o => o.id == id)) return;
+            if (!id || daftarObat.some(o => o.id == id) || stok <= 0) return;
 
-            daftarObat.push({ id, nama, harga });
+            daftarObat.push({ id, nama, harga, stok });
             renderObat();
             selectObat.selectedIndex = 0;
         });
@@ -118,7 +134,10 @@
                 const item = document.createElement('li');
                 item.className = 'flex items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700';
                 item.innerHTML = `
-                    <span>${obat.nama} — <span class="font-semibold">Rp ${obat.harga.toLocaleString()}</span></span>
+                    <span>
+                        ${obat.nama} — <span class="font-semibold">Rp ${obat.harga.toLocaleString()}</span>
+                        <span class="text-xs text-slate-400 ml-2">Stok: ${obat.stok}</span>
+                    </span>
                     <button type="button"
                         onclick="hapusObat(${index})"
                         class="btn btn-sm bg-red-500 hover:bg-red-600 text-white border-none rounded-lg px-3">
